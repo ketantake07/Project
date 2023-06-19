@@ -1,0 +1,32 @@
+# Base image
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y \
+    git \
+    vim \
+    build-essential
+
+RUN apt-get install -y openjdk-11-jdk
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH=$PATH:$JAVA_HOME/bin
+
+RUN apt-get install -y wget
+RUN wget -O eclipse.tar.gz https://eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/2021-09/R/eclipse-java-2021-09-R-linux-gtk-x86_64.tar.gz&r=1
+RUN tar -xf eclipse.tar.gz && rm eclipse.tar.gz
+RUN mv eclipse /opt/
+
+RUN /opt/eclipse/eclipse -nosplash -application org.eclipse.equinox.p2.director \
+    -repository https://updates.yakindu.com/milo/stable/latest/ \
+    -installIU com.yakindu.statechart.product
+
+RUN git clone https://github.com/ethereum/go-ethereum.git
+RUN cd go-ethereum && make geth
+
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository -y ppa:ethereum/ethereum
+RUN apt-get update
+RUN apt-get install -y solc
+
+WORKDIR /app
+
+CMD /opt/eclipse/eclipse
